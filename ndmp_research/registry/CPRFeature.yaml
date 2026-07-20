@@ -1,0 +1,15 @@
+feature:
+  id: FEAT_001
+  name: CPRFeature
+  version: 1.0.0
+  status: production
+  category: PriceGeometry
+  author: Quantitative Research Team
+  description: "Frank Ochoa Central Pivot Range (Pivot, TC, BC, CPR Width %, Narrow CPR flag, Camarilla H3/L3/H4/L4)"
+  dependencies:
+    - high
+    - low
+    - close
+
+parameters:
+  narrow_cpr_threshold_pct: 0.5

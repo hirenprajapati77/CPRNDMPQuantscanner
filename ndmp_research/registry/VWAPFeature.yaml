@@ -1,0 +1,14 @@
+feature:
+  id: FEAT_002
+  name: VWAPFeature
+  version: 1.0.0
+  status: production
+  category: Microstructure
+  author: Quantitative Research Team
+  description: "Volume-Weighted Average Price distance percentage and VWAP slope"
+  dependencies:
+    - close
+    - vwap
+
+parameters:
+  slope_period: 5

@@ -1,0 +1,14 @@
+feature:
+  id: FEAT_004
+  name: RelativeStrengthFeature
+  version: 1.0.0
+  status: production
+  category: RelativeMomentum
+  author: Quantitative Research Team
+  description: "Mansfield Relative Strength vs Benchmark Nifty 50 index"
+  dependencies:
+    - close
+    - benchmark_close
+
+parameters:
+  period: 14

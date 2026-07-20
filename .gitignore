@@ -1,0 +1,18 @@
+# Python ignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Data files
+data/parquet/
+*.parquet
+
+# Output logs and journals
+*.log
+ndmp_knowledge/journal/
+ndmp_knowledge/experiments/release_packet_*.json
+ndmp_knowledge/experiments/weekly_review_*.md

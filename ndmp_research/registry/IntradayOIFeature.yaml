@@ -1,0 +1,14 @@
+feature:
+  id: FEAT_003
+  name: IntradayOIFeature
+  version: 1.0.0
+  status: production
+  category: FuturesOI
+  author: Quantitative Research Team
+  description: "Intraday Open Interest change percentage and Price-OI Matrix build-up classification"
+  dependencies:
+    - close
+    - open_interest
+
+parameters:
+  oi_change_threshold: 0.01
