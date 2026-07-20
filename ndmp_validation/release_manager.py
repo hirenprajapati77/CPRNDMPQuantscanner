@@ -25,25 +25,25 @@ class ReleasePromotionPacket(BaseModel):
     governance_gates: GovernanceGateSuiteResult
     benchmark_report: Dict[str, Any]
     
-    # Shadow Mode Performance
+    # [PLACEHOLDER_MOCK_DATA] - Mock default values for release compilation verification
     shadow_mode_sessions: int
     shadow_mode_pnl_summary: Dict[str, float]
     cpr_baseline_comparison: Dict[str, Any]
     
-    # Audit Checklist
+    # Audit Checklist (Set to PASS for scaffolding, must be audited manually prior to final promotion)
     technical_audit_checklist: Dict[str, str] = Field(
         default={
-            "DSR_Pearson_Kurtosis_Correctness": "VERIFIED & CORRECTED",
-            "Zero_Lookahead_Bias": "VERIFIED & PASSED",
-            "Friction_Deduction_0.15_Percent": "VERIFIED & APPLIED",
-            "Zero_Range_CPR_Safety": "VERIFIED & PASSED",
-            "Tie_Break_Alphabetical_Determinism": "VERIFIED & PASSED",
-            "Feature_Yaml_Schema_Validation": "VERIFIED & PASSED",
-            "Circular_Dependency_DFS_Graph_Check": "VERIFIED & PASSED",
-            "Benchmark_Warmup_Exclusion": "VERIFIED & PASSED"
+            "DSR_Pearson_Kurtosis_Correctness": "[VERIFIED_PLACEHOLDER]",
+            "Zero_Lookahead_Bias": "[VERIFIED_PLACEHOLDER]",
+            "Friction_Deduction_0.15_Percent": "[VERIFIED_PLACEHOLDER]",
+            "Zero_Range_CPR_Safety": "[VERIFIED_PLACEHOLDER]",
+            "Tie_Break_Alphabetical_Determinism": "[VERIFIED_PLACEHOLDER]",
+            "Feature_Yaml_Schema_Validation": "[VERIFIED_PLACEHOLDER]",
+            "Circular_Dependency_DFS_Graph_Check": "[VERIFIED_PLACEHOLDER]",
+            "Benchmark_Warmup_Exclusion": "[VERIFIED_PLACEHOLDER]"
         }
     )
-    decision: str = "APPROVED"
+    decision: str = "PENDING_MANUAL_REVIEW"
 
 
 class ReleaseManager:

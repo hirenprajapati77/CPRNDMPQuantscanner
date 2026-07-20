@@ -47,8 +47,7 @@ class WeeklyReviewGenerator:
         
         total_sessions = len(journals)
         
-        # Build mock statistical aggregations for placeholder report before 5 full days are logged
-        # in order to demonstrate structure.
+        # WARNING: [PLACEHOLDER_MOCK_DATA] - Educational placeholders before live stats are logged
         report_content = f"""# NDMP OS v6.0 - Weekly Review Report (Week {week_num})
 
 ## 1. Daily Operational Health
@@ -61,22 +60,22 @@ class WeeklyReviewGenerator:
   - P95 Latency: 2588.7 ms
 * **Memory Peak**: 0.73 MB (Budget: < 512.0 MB)
 
-## 2. Weekly Statistical Snapshot
+## 2. Weekly Statistical Snapshot [PLACEHOLDER_MOCK_DATA]
 * **Total Candidates Scored**: {total_sessions * 3}
-* **Win Rate (Realized T+1)**: 72.4%
-* **Profit Factor**: 2.14 (post-friction)
-* **Average Return Per Trade**: +1.15%
-* **Max Drawdown**: -4.8%
+* **Win Rate (Realized T+1)**: 72.4% [PLACEHOLDER]
+* **Profit Factor**: 2.14 (post-friction) [PLACEHOLDER]
+* **Average Return Per Trade**: +1.15% [PLACEHOLDER]
+* **Max Drawdown**: -4.8% [PLACEHOLDER]
 
-## 3. Drift & Stability Analysis (PSI)
-* **CPR Width % Drift (PSI)**: 0.02 (Stable)
-* **VWAP Dist % Drift (PSI)**: 0.04 (Stable)
-* **OI Change % Drift (PSI)**: 0.08 (Stable)
-* **Mansfield RS Drift (PSI)**: 0.03 (Stable)
+## 3. Drift & Stability Analysis (PSI) [PLACEHOLDER_MOCK_DATA]
+* **CPR Width % Drift (PSI)**: 0.02 (Stable) [PLACEHOLDER]
+* **VWAP Dist % Drift (PSI)**: 0.04 (Stable) [PLACEHOLDER]
+* **OI Change % Drift (PSI)**: 0.08 (Stable) [PLACEHOLDER]
+* **Mansfield RS Drift (PSI)**: 0.03 (Stable) [PLACEHOLDER]
 * *Verdict*: No significant distribution drift detected (All features PSI < 0.10).
 
-## 4. CPR Baseline Comparison
-| Metric | CPR Baseline | NDMP OS v6.0 |
+## 4. CPR Baseline Comparison [PLACEHOLDER_MOCK_DATA]
+| Metric | CPR Baseline [PLACEHOLDER] | NDMP OS v6.0 [PLACEHOLDER] |
 | :--- | :--- | :--- |
 | Trades Executed | 18 | 12 |
 | Win Rate | 58.3% | 72.4% |

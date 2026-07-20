@@ -5,6 +5,7 @@ Monitors both Micro-benchmarks (CPR calculation) and End-to-End pipeline benchma
 
 import time
 import tracemalloc
+from typing import List, Dict
 import pandas as pd
 import numpy as np
 from ndmp_research.features.cpr_feature import CPRFeature
@@ -97,5 +98,4 @@ def run_benchmark_suite(num_iterations: int = 50, warmups: int = 5) -> None:
 
 
 if __name__ == "__main__":
-    from typing import List
     run_benchmark_suite()

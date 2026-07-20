@@ -90,7 +90,10 @@ class ValidationEngine:
         pf = self.calculate_profit_factor(candidate_returns)
         dsr = self.calculate_deflated_sharpe(candidate_returns)
 
-        # Simulate 20 CPCV paths for PBO estimation
+        # WARNING: [PLACEHOLDER_MOCK_DATA]
+        # The tiling method below is a simplified placeholder for CPCV paths.
+        # Tiling candidate_returns 20 times produces 20 identical paths, which biases PBO to ~0.0%.
+        # This must be replaced in v6.1 with a true Combinatorial Purged Cross-Validation path split generator.
         reshaped = np.tile(candidate_returns, (20, 1)).T
         pbo = self.calculate_pbo_percent(reshaped)
 
