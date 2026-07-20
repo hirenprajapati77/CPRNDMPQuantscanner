@@ -38,8 +38,18 @@ def main():
     target_hour = 15
     target_minute = 20
     
+    # Initialize last_run_date from the most recent journal file at startup to prevent double-runs
+    import glob
     last_run_date = None
-    
+    journals = sorted(glob.glob("ndmp_knowledge/journal/decisions_*.json"))
+    if journals:
+        last_file = os.path.basename(journals[-1])
+        parts = last_file.split("_")
+        if len(parts) >= 2:
+            date_str = parts[1]  # YYYYMMDD
+            last_run_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+            print(f"Detected previous scan for date: {last_run_date}")
+            
     while True:
         now = datetime.now()
         current_date_str = now.strftime("%Y-%m-%d")

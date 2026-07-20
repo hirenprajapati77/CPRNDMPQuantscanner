@@ -134,3 +134,37 @@ def test_release_promotion_packet_compilation(tmp_path):
     assert data["release_id"].startswith("REL-")
     assert data["governance_gates"]["overall_status"] == "PASS"
 
+
+def test_gates_timestamp_utc_correctness():
+    """Verify that GovernanceGateSuiteResult includes a valid ISO UTC timestamp, not dataset_version."""
+    from ndmp_validation.validation_engine import ValidationEngine
+    import numpy as np
+
+    engine = ValidationEngine()
+    candidate_returns = np.array([0.01, 0.02, -0.01])
+    baseline_returns = np.array([0.005, 0.01, -0.005])
+
+    suite_result = engine.evaluate_candidate(
+        validation_id="VAL-TEST",
+        dataset_version="DATA_VERSION_123",
+        git_commit="COMMIT_123",
+        candidate_returns=candidate_returns,
+        baseline_returns=baseline_returns
+    )
+
+    # Must be valid ISO timestamp, not DATA_VERSION_123
+    assert suite_result.timestamp_utc != "DATA_VERSION_123"
+    assert "T" in suite_result.timestamp_utc  # ISO format check
+
+
+def test_weekly_review_generator_execution(tmp_path):
+    """Verify weekly review generator executes without NameError and creates output file."""
+    from ndmp_validation.weekly_review_generator import WeeklyReviewGenerator
+    generator = WeeklyReviewGenerator(
+        journal_dir=str(tmp_path),
+        output_dir=str(tmp_path)
+    )
+    report_path = generator.generate_report(week_num=1)
+    assert os.path.exists(report_path)
+
+
