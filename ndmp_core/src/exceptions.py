@@ -18,6 +18,13 @@ class MissingDependencyError(NDMPError):
     pass
 
 
+class DataSourceIntegrityError(NDMPError):
+    """Raised when an input column is present but structurally incapable of carrying
+    real signal (e.g. a constant/frozen value across the full series), indicating
+    the upstream data source does not actually provide this data."""
+    pass
+
+
 class FeatureCalculationError(NDMPError):
     """Raised when a feature plugin fails during computation."""
     pass

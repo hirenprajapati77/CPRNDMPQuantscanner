@@ -145,7 +145,7 @@ def test_scanner_nan_handling():
         "low": [199.5] * 5,
         "close": [198.5, 199.0, 199.2, 199.5, np.nan],  # NaN Close will produce NaNs
         "volume": [10000] * 5,
-        "open_interest": [50000] * 5,
+        "open_interest": [50000, 51000, 52000, 53000, 54000],
         "vwap": [198.5] * 5,
         "benchmark_close": [24000.0] * 5
     })

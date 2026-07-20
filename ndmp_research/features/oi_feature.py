@@ -7,7 +7,11 @@ from typing import Dict, Any, List
 import pandas as pd
 import numpy as np
 from ndmp_research.features.base_feature import BaseFeature
-from ndmp_core.src.exceptions import MissingDependencyError, FeatureCalculationError
+from ndmp_core.src.exceptions import (
+    MissingDependencyError,
+    FeatureCalculationError,
+    DataSourceIntegrityError,
+)
 
 
 class IntradayOIFeature(BaseFeature):
@@ -35,6 +39,20 @@ class IntradayOIFeature(BaseFeature):
         for dep in self.dependencies():
             if dep not in df.columns:
                 raise MissingDependencyError(f"IntradayOIFeature missing required column: {dep}")
+
+        # Guard: a real Futures OI feed varies intraday/day-to-day. A constant or
+        # all-NaN series (e.g. yfinance equity data, which has no OI field and must
+        # not be backfilled with a placeholder) silently forces buildup_code to 0
+        # (Neutral) for every row, zeroing out its +15pt weight in RankingEngine
+        # without any visible error. Fail loudly instead of scoring on dead data.
+        oi = df["open_interest"]
+        if oi.isna().all() or oi.nunique(dropna=True) <= 1:
+            raise DataSourceIntegrityError(
+                "IntradayOIFeature received a constant or all-NaN 'open_interest' "
+                "series — this data source does not provide real Futures OI. "
+                "Route this symbol through a real OI feed (e.g. Fyers futures API) "
+                "or exclude IntradayOIFeature from scoring for this data source."
+            )
 
         try:
             price_change = df["close"].diff().fillna(0.0)
