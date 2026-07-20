@@ -46,8 +46,14 @@ def download_symbol_data(ticker: str, start_date: str = "2026-06-01") -> pd.Data
         "low": df["Low"],
         "close": df["Close"],
         "volume": df["Volume"],
-        # Mock Open Interest since it's not present in free equity feeds
-        "open_interest": [100000] * len(df),
+        # Yahoo Finance equity data has no Futures OI field. Previously this was
+        # backfilled with a constant placeholder (100000), which silently forced
+        # IntradayOIFeature's buildup_code to 0 (Neutral) for every row — zeroing
+        # out its +15pt scoring weight with no visible error. Emit NaN instead so
+        # IntradayOIFeature's data-integrity guard raises DataSourceIntegrityError
+        # rather than scoring on fake data. Real OI must come from a futures feed
+        # (e.g. Fyers) before this feature can be trusted for this symbol.
+        "open_interest": [float("nan")] * len(df),
         "vwap": typical_price
     })
     
