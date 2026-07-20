@@ -35,8 +35,8 @@ def main():
     print("Press Ctrl+C to stop.")
     print("=" * 80)
     
-    target_hour = 15
-    target_minute = 20
+    target_hour = 9
+    target_minute = 50
     
     # Initialize last_run_date from the most recent journal file at startup to prevent double-runs
     import glob
@@ -46,12 +46,13 @@ def main():
         last_file = os.path.basename(journals[-1])
         parts = last_file.split("_")
         if len(parts) >= 2:
-            date_str = parts[1]  # YYYYMMDD
+            date_str = parts[1]  # YYYYMMDD in UTC
             last_run_date = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
-            print(f"Detected previous scan for date: {last_run_date}")
+            print(f"Detected previous scan for UTC date: {last_run_date}")
             
+    from datetime import timezone
     while True:
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         current_date_str = now.strftime("%Y-%m-%d")
             
         if is_trading_day():
