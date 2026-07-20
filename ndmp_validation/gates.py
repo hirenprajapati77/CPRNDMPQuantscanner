@@ -4,6 +4,7 @@ Defines the strict quantitative thresholds required for model/feature promotion.
 """
 
 import math
+from datetime import datetime, timezone
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any
 
@@ -100,7 +101,7 @@ class GovernanceGateChecker:
 
         return GovernanceGateSuiteResult(
             validation_id=validation_id,
-            timestamp_utc=dataset_version,
+            timestamp_utc=datetime.now(timezone.utc).isoformat(),
             dataset_version=dataset_version,
             git_commit=git_commit,
             overall_status="PASS" if all_passed else "FAIL",

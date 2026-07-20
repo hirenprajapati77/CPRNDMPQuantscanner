@@ -7,6 +7,7 @@ latency distributions, and compiles the weekly report.
 import os
 import glob
 import json
+from datetime import datetime
 import numpy as np
 from typing import Dict, Any, List
 
@@ -96,7 +97,6 @@ class WeeklyReviewGenerator:
 
 
 if __name__ == "__main__":
-    from datetime import datetime
     gen = WeeklyReviewGenerator()
     path = gen.generate_report(1)
     print(f"[REVIEW GENERATOR SUCCESS] Generated report: {path}")

@@ -64,7 +64,7 @@ def main():
         
         # 2. Ingestion & Quality Audit
         checksum = auditor.compute_sha256(df)
-        score_report = auditor.audit_dataframe(df, dataset_name=symbol, expected_columns=["open", "high", "low", "close", "open_interest", "vwap"])
+        score_report = auditor.audit_dataframe(df, dataset_name=symbol, expected_columns=["open", "high", "low", "close", "open_interest", "vwap", "benchmark_close"])
         
         print(f"  Checksum: {checksum}")
         print(f"  Quality Score: {score_report.quality_score:.1f}%")

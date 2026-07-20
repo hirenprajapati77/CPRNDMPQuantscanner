@@ -38,19 +38,16 @@ def main():
     target_hour = 15
     target_minute = 20
     
-    has_run_today = False
+    last_run_date = None
     
     while True:
         now = datetime.now()
-        
-        # Reset run flag at midnight
-        if now.hour == 0 and now.minute == 0:
-            has_run_today = False
+        current_date_str = now.strftime("%Y-%m-%d")
             
         if is_trading_day():
-            if now.hour == target_hour and now.minute == target_minute and not has_run_today:
+            if now.hour == target_hour and now.minute == target_minute and last_run_date != current_date_str:
                 run_scanner_job()
-                has_run_today = True
+                last_run_date = current_date_str
                 
         # Sleep 10 seconds between checks
         time.sleep(10)
