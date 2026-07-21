@@ -118,6 +118,19 @@ class FyersOIPoller:
         """Blocking loop — polls at poll_interval_seconds until interrupted.
         Intended to run as its own long-lived process, separate from the
         3:20 PM scanner cron in local_scheduler.py."""
+        import pytz
+        from ndmp_core.src.trading_calendar import NSETradingCalendar
+
+        calendar = NSETradingCalendar()
+        tz_ist = pytz.timezone("Asia/Kolkata")
+
         while True:
-            self.poll_once()
+            now_ist = datetime.now(tz_ist)
+            if calendar.is_market_open(now_ist):
+                self.poll_once()
+            else:
+                print(
+                    f"[{now_ist.strftime('%Y-%m-%d %H:%M:%S')}] Market is closed (weekend, holiday, or non-market hours). Skipping poll.",
+                    flush=True,
+                )
             time.sleep(self.poll_interval_seconds)

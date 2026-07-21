@@ -16,3 +16,7 @@ data/parquet/
 ndmp_knowledge/journal/
 ndmp_knowledge/experiments/release_packet_*.json
 ndmp_knowledge/experiments/weekly_review_*.md
+
+# Scratch and Environment files
+scratch/
+*.env
