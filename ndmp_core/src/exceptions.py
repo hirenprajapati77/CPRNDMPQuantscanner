@@ -36,3 +36,13 @@ class ReplayError(NDMPError):
 class BrokerError(NDMPError):
     """Raised when an error occurs in broker API order execution adapters."""
     pass
+
+
+class FyersAuthError(BrokerError):
+    """Raised when Fyers access token env vars are missing, malformed, or fail to decrypt."""
+    pass
+
+
+class FyersAPIError(BrokerError):
+    """Raised when a Fyers API call fails or returns an unexpected/non-ok response shape."""
+    pass
