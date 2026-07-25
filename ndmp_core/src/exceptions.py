@@ -43,6 +43,12 @@ class FyersAuthError(BrokerError):
     pass
 
 
+class FyersTokenRefreshError(FyersAuthError):
+    """Raised when the daily refresh_token -> access_token exchange with Fyers fails
+    (expired/invalid refresh_token, wrong PIN, network error, or malformed response)."""
+    pass
+
+
 class FyersAPIError(BrokerError):
     """Raised when a Fyers API call fails or returns an unexpected/non-ok response shape."""
     pass
