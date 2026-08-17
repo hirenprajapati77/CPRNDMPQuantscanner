@@ -11,6 +11,18 @@ from ndmp_core.src.ranking_engine import RankingEngine
 from ndmp_core.src.decision_journal import DecisionJournalLogger
 
 
+def _with_prior_session(df: pd.DataFrame, high: float, low: float, close: float) -> pd.DataFrame:
+    """Prepend one prior trading session row so CPR uses completed prior-day pivots."""
+    first_ts = pd.Timestamp(df["timestamp"].iloc[0])
+    prior = df.iloc[[0]].copy()
+    prior["timestamp"] = [first_ts - pd.Timedelta(days=1)]
+    prior["high"] = high
+    prior["low"] = low
+    prior["close"] = close
+    prior["open"] = close
+    return pd.concat([prior, df], ignore_index=True)
+
+
 def test_golden_regression_2025_07_18():
     """
     Golden Regression Test for Frozen Session 2025-07-18.
@@ -35,6 +47,8 @@ def test_golden_regression_2025_07_18():
         "benchmark_close": [24000.0] * 5
     })
 
+    df_bel = _with_prior_session(df_bel, high=200.0, low=199.5, close=199.0)
+
     # Stock 2: TRENT - Wide CPR (high=5000, low=4500, width = 10%) + Long Build-up (Price Up, OI Up)
     df_trent = pd.DataFrame({
         "timestamp": dates,
@@ -48,6 +62,7 @@ def test_golden_regression_2025_07_18():
         "vwap": [4950.0] * 5,
         "benchmark_close": [24000.0] * 5
     })
+    df_trent = _with_prior_session(df_trent, high=5000.0, low=4500.0, close=4900.0)
 
     # Stock 3: DIXON - Short Build-up (Price Down, OI Up) + Below VWAP + Wide CPR (width = 8.4%)
     df_dixon = pd.DataFrame({
@@ -62,6 +77,7 @@ def test_golden_regression_2025_07_18():
         "vwap": [11900.0] * 5,
         "benchmark_close": [24000.0] * 5
     })
+    df_dixon = _with_prior_session(df_dixon, high=12500.0, low=10000.0, close=11950.0)
 
     sig_bel = scanner.scan_symbol("BEL", df_bel)
     sig_trent = scanner.scan_symbol("TRENT", df_trent)
@@ -111,6 +127,7 @@ def test_decision_journal_logger(tmp_path):
         "vwap": [198.5] * 5,
         "benchmark_close": [24000.0] * 5
     })
+    df_bel = _with_prior_session(df_bel, high=200.0, low=199.5, close=199.0)
 
     sig_bel = scanner.scan_symbol("BEL", df_bel)
     ranked_results = ranker.rank_candidates([sig_bel])
@@ -149,7 +166,7 @@ def test_scanner_nan_handling():
         "vwap": [198.5] * 5,
         "benchmark_close": [24000.0] * 5
     })
-    with pytest.raises(DataValidationError, match="NaN value detected in feature"):
+    with pytest.raises(DataValidationError, match="NaN value detected in input column"):
         scanner.scan_symbol("BEL", df_nan)
 
 

@@ -3,17 +3,25 @@ NDMP OS v6.0 - Local End-to-End Scanner CLI Runner
 Loads data, validates quality, runs features, ranks candidates, and writes decision journals.
 """
 
-import os
 import glob
+import os
+import time
 import pandas as pd
 from typing import List
+
 from ndmp_core.src.symbol_master import SymbolMasterRegistry, SymbolMetadata
 from ndmp_core.src.data_quality import DataQualityAuditor
 from ndmp_core.src.scanner_engine import ScannerEngine, StockSignals
 from ndmp_core.src.ranking_engine import RankingEngine
 from ndmp_core.src.decision_journal import DecisionJournalLogger
 from ndmp_core.src.observation_journal import ObservationJournal
-from ndmp_core.src.exceptions import NDMPError
+from ndmp_core.src.config import DEFAULT_CONFIG
+from ndmp_core.src.exceptions import NDMPError, DataValidationError, DataSourceIntegrityError
+
+
+SCANNER_EXPECTED_COLUMNS = [
+    "open", "high", "low", "close", "vwap", "benchmark_close", "open_interest",
+]
 
 
 def populate_symbol_master(registry: SymbolMasterRegistry) -> None:
@@ -33,64 +41,76 @@ def populate_symbol_master(registry: SymbolMasterRegistry) -> None:
 
 
 def main():
+    start_time = time.perf_counter()
+
     print("=" * 80)
     print("NDMP OS v6.0 - LOCAL SCANNER RUNNER")
     print("=" * 80)
 
-    # 1. Initialize Registries
+    config = DEFAULT_CONFIG
     symbol_master = SymbolMasterRegistry()
     populate_symbol_master(symbol_master)
-    
+
     scanner = ScannerEngine()
     ranker = RankingEngine()
     auditor = DataQualityAuditor()
     logger = DecisionJournalLogger(journal_dir="ndmp_knowledge/journal")
-    
-    parquet_files = glob.glob("data/parquet/*.parquet")
+
+    parquet_files = glob.glob(os.path.join(config.engine.data_dir, "*.parquet"))
     valid_signals: List[StockSignals] = []
-    
+    symbols_processed = 0
+    symbols_skipped = 0
+
     for fpath in parquet_files:
-        # Extract symbol
         filename = os.path.basename(fpath)
         symbol = os.path.splitext(filename)[0]
-        
-        # Skip index benchmark files
+
         if symbol == "NIFTY":
             continue
-            
+
+        symbols_processed += 1
         print(f"\nProcessing symbol: {symbol}")
         print(f"Reading dataset: {fpath}")
-        
+
         df = pd.read_parquet(fpath)
-        
-        # 2. Ingestion & Quality Audit
+
         checksum = auditor.compute_sha256(df)
-        score_report = auditor.audit_dataframe(df, dataset_name=symbol, expected_columns=["open", "high", "low", "close", "vwap", "benchmark_close"])
-        
+        score_report = auditor.audit_dataframe(
+            df, dataset_name=symbol, expected_columns=SCANNER_EXPECTED_COLUMNS
+        )
+
         print(f"  Checksum: {checksum}")
         print(f"  Quality Score: {score_report.quality_score:.1f}%")
-        
-        if score_report.quality_score < 95.0:
-            print(f"  [SKIP] Skipping '{symbol}' due to low data quality score ({score_report.quality_score:.1f}%).")
+
+        if score_report.status != "ACCEPTED":
+            reason = []
+            if not score_report.schema_passed:
+                reason.append("schema")
+            if not score_report.oi_integrity_passed:
+                reason.append("OI integrity")
+            if not score_report.calendar_passed:
+                reason.append("calendar")
+            if score_report.quality_score < auditor.QUALITY_THRESHOLD:
+                reason.append("low score")
+            print(f"  [SKIP] Skipping '{symbol}' ({', '.join(reason) or 'audit failed'}).")
+            symbols_skipped += 1
             continue
-            
-        # 3. Scanner execution
+
         try:
             signals = scanner.scan_symbol(symbol, df)
             valid_signals.append(signals)
-            print(f"  [SUCCESS] Calculated features successfully.")
-        except Exception as e:
-            print(f"  [ERROR] Scanning '{symbol}' failed: {str(e)}")
-            
+            print("  [SUCCESS] Calculated features successfully.")
+        except (DataValidationError, DataSourceIntegrityError, NDMPError) as e:
+            print(f"  [ERROR] Scanning '{symbol}' failed: {e}")
+            symbols_skipped += 1
+
     if not valid_signals:
         print("\n[ABORT] No symbols scanned successfully.")
         return
-        
-    # 4. Score and Rank candidates
+
     print("\nRanking candidates...")
     ranked_list = ranker.rank_candidates(valid_signals)
-    
-    # Print ranked dashboard
+
     print("\n" + "=" * 80)
     print("NDMP OS v6.0 REAL-TIME CANDIDATES RANKING")
     print("=" * 80)
@@ -99,21 +119,26 @@ def main():
         safe_reasons = [r.replace("✔", "[OK]").replace("⚠", "[WARN]").replace("⚡", "[BREAKOUT]") for r in rc.reasons]
         print(f"  Reasons: {safe_reasons}")
         print("-" * 80)
-        
-    # 5. Log decision journal session
-    manifest_p, journal_p = logger.log_scan_session(ranked_candidates=ranked_list, runtime_ms=45.2)
-    print(f"\n[JOURNAL SUCCESS] Decision logs successfully archived:")
+
+    runtime_ms = (time.perf_counter() - start_time) * 1000.0
+    manifest_p, journal_p = logger.log_scan_session(
+        ranked_candidates=ranked_list,
+        runtime_ms=runtime_ms,
+        symbols_processed=symbols_processed,
+        symbols_skipped=symbols_skipped,
+    )
+    print("\n[JOURNAL SUCCESS] Decision logs successfully archived:")
     print(f"  Manifest: {manifest_p}")
     print(f"  Journal: {journal_p}")
+    print(f"  Runtime: {runtime_ms:.1f} ms")
     print("=" * 80 + "\n")
 
-    # 6. Observation-mode OI validation logging (does not affect scoring/ranking)
     obs_journal = ObservationJournal(journal_dir="data/observation_journal")
     scan_date = ranked_list[0].signals.timestamp.split(" ")[0] if ranked_list else None
     if scan_date:
         obs_journal.log_signals(ranked_list, scan_date=scan_date)
         for rc in ranked_list:
-            fpath = os.path.join("data/parquet", f"{rc.symbol}.parquet")
+            fpath = os.path.join(config.engine.data_dir, f"{rc.symbol}.parquet")
             if os.path.exists(fpath):
                 ohlcv_df = pd.read_parquet(fpath)
                 obs_journal.resolve_outcomes(rc.symbol, ohlcv_df)

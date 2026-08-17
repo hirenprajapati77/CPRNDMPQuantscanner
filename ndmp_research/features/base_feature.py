@@ -18,7 +18,7 @@ class BaseFeature(ABC):
         self.manifest_path = manifest_path
 
     @abstractmethod
-    def calculate(self, df: pd.DataFrame) -> pd.Series:
+    def calculate(self, df: pd.DataFrame) -> pd.Series | pd.DataFrame:
         """
         Compute feature values from normalized OHLCV + OI data dataframe.
         
@@ -31,7 +31,7 @@ class BaseFeature(ABC):
         pass
 
     @abstractmethod
-    def validate(self, series: pd.Series) -> bool:
+    def validate(self, series: pd.Series | pd.DataFrame) -> bool:
         """
         Run runtime quality and zero look-ahead bias validation checks on computed feature series.
         

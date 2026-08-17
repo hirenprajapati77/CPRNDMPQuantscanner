@@ -133,11 +133,12 @@ def write_new_access_token(env_file_path: str, fernet: Fernet, new_access_token:
         )
 
     dir_name = os.path.dirname(env_file_path) or "."
+    original_mode = os.stat(env_file_path).st_mode & 0o777
     fd, tmp_path = tempfile.mkstemp(dir=dir_name)
     try:
         with os.fdopen(fd, "w") as f:
             f.writelines(new_lines)
-        os.chmod(tmp_path, 0o600)
+        os.chmod(tmp_path, original_mode or 0o600)
         os.replace(tmp_path, env_file_path)  # atomic on same filesystem
     finally:
         if os.path.exists(tmp_path):

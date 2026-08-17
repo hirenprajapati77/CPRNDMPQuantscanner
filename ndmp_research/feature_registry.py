@@ -8,7 +8,7 @@ import glob
 import pandas as pd
 from typing import Dict, Any, List
 from ndmp_research.features.base_feature import BaseFeature
-from ndmp_core.src.exceptions import MissingDependencyError, NDMPError
+from ndmp_core.src.exceptions import MissingDependencyError, NDMPError, FeatureCalculationError
 
 try:
     import yaml
@@ -163,12 +163,25 @@ class FeatureRegistry:
             raise MissingDependencyError(f"Feature '{feature_name}' missing dependencies: {missing}")
         return True
 
+    @staticmethod
+    def _validate_feature_output(feature: BaseFeature, feat_out: pd.Series | pd.DataFrame) -> None:
+        """Validate the latest actionable row (scanner reads iloc[-1])."""
+        if isinstance(feat_out, pd.DataFrame):
+            sample = feat_out.iloc[[-1]]
+        else:
+            sample = feat_out.iloc[-1]
+        if not feature.validate(sample):
+            raise FeatureCalculationError(
+                f"Feature '{feature.metadata()['name']}' failed post-calculation validate() on latest row."
+            )
+
     def calculate_all(self, df: pd.DataFrame) -> pd.DataFrame:
         """Calculate all registered features against an input DataFrame."""
         result_df = pd.DataFrame(index=df.index)
         for feat_name, feature in self.feature_instances.items():
             self.validate_dependencies(feat_name, list(df.columns))
             feat_out = feature.calculate(df)
+            self._validate_feature_output(feature, feat_out)
             if isinstance(feat_out, pd.DataFrame):
                 for col in feat_out.columns:
                     result_df[col] = feat_out[col]

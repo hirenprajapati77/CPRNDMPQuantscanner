@@ -47,6 +47,14 @@ class ScannerEngine:
         if df.empty:
             raise DataValidationError(f"Cannot scan symbol '{symbol}': input DataFrame is empty.")
 
+        raw_required = ["close", "high", "low", "open_interest", "vwap", "benchmark_close"]
+        last_raw = df.iloc[-1]
+        for col in raw_required:
+            if col in df.columns and pd.isna(last_raw[col]):
+                raise DataValidationError(
+                    f"NaN value detected in input column '{col}' for symbol '{symbol}'."
+                )
+
         feat_df = self.registry.calculate_all(df)
         if feat_df.empty:
             raise DataValidationError(f"Cannot scan symbol '{symbol}': calculated features DataFrame is empty.")

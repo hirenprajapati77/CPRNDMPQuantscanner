@@ -52,7 +52,7 @@ def test_data_quality_auditor_pass():
         "low": [99.0] * 10,
         "close": [103.0] * 10,
         "volume": [5000] * 10,
-        "open_interest": [12000] * 10,
+        "open_interest": [12000 + i * 50 for i in range(10)],
         "vwap": [102.5] * 10
     })
     expected_cols = ["timestamp", "symbol", "open", "high", "low", "close", "volume", "open_interest", "vwap"]
@@ -60,6 +60,29 @@ def test_data_quality_auditor_pass():
     assert report.status == "ACCEPTED"
     assert report.quality_score == 100.0
     assert report.completeness_percent == 100.0
+
+
+def test_data_quality_auditor_reject_constant_oi():
+    auditor = DataQualityAuditor()
+    df = pd.DataFrame({
+        "timestamp": pd.date_range("2026-01-19", periods=10, freq="15min"),
+        "symbol": ["BEL"] * 10,
+        "open": [100.0] * 10,
+        "high": [105.0] * 10,
+        "low": [99.0] * 10,
+        "close": [103.0] * 10,
+        "volume": [5000] * 10,
+        "open_interest": [12000] * 10,
+        "vwap": [102.5] * 10,
+        "benchmark_close": [24000.0] * 10,
+    })
+    expected_cols = [
+        "timestamp", "symbol", "open", "high", "low", "close",
+        "volume", "open_interest", "vwap", "benchmark_close",
+    ]
+    report = auditor.audit_dataframe(df, "TEST_DS", expected_cols)
+    assert report.oi_integrity_passed is False
+    assert report.status == "REJECTED"
 
 
 def test_data_quality_auditor_reject_empty():
