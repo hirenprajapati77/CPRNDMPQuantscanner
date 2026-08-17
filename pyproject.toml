@@ -31,6 +31,10 @@ dev = [
     "mypy>=1.0.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["ndmp_core*", "ndmp_research*", "ndmp_validation*"]
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q"

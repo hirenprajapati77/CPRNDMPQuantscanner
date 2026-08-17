@@ -11,32 +11,43 @@ from ndmp_research.features.vwap_feature import VWAPFeature
 from ndmp_research.features.oi_feature import IntradayOIFeature
 from ndmp_research.features.rs_feature import RelativeStrengthFeature
 from ndmp_research.feature_registry import FeatureRegistry
-from ndmp_core.src.exceptions import MissingDependencyError
+from ndmp_core.src.exceptions import MissingDependencyError, DataSourceIntegrityError
 
 
 def test_cpr_feature_ochoa_parity():
     cpr_plugin = CPRFeature()
     df = pd.DataFrame({
-        "high": [200.0],
-        "low": [190.0],
-        "close": [195.0]
+        "timestamp": ["2025-07-17", "2025-07-18"],
+        "high": [200.0, 210.0],
+        "low": [190.0, 195.0],
+        "close": [195.0, 205.0],
     })
     result = cpr_plugin.calculate(df)
-    
-    # Ochoa Formula Verification:
-    # Pivot = (200 + 190 + 195) / 3 = 585 / 3 = 195.0
-    # BC = (200 + 190) / 2 = 195.0
-    # TC = (195.0 - 195.0) + 195.0 = 195.0
-    # CPR Width = |195 - 195| / 195 = 0.0%
-    assert result["cpr_pivot"].iloc[0] == pytest.approx(195.0)
-    assert result["cpr_tc"].iloc[0] == pytest.approx(195.0)
-    assert result["cpr_bc"].iloc[0] == pytest.approx(195.0)
-    assert result["cpr_width_pct"].iloc[0] == pytest.approx(0.0)
-    assert result["is_narrow_cpr"].iloc[0] == True
 
-    # Camarilla H4/L4 verification:
-    # H4 = Close + (High - Low) * 1.1 / 2 = 195 + (10 * 0.55) = 200.5
-    assert result["cam_h4"].iloc[0] == pytest.approx(200.5)
+    # Row 1 uses prior session (200, 190, 195) — Ochoa Formula Verification:
+    # Pivot = (200 + 190 + 195) / 3 = 195.0
+    assert result["cpr_pivot"].iloc[1] == pytest.approx(195.0)
+    assert result["cpr_tc"].iloc[1] == pytest.approx(195.0)
+    assert result["cpr_bc"].iloc[1] == pytest.approx(195.0)
+    assert result["cpr_width_pct"].iloc[1] == pytest.approx(0.0)
+    assert result["is_narrow_cpr"].iloc[1] == True
+
+    # Camarilla from prior session close (195): H4 = 195 + (10 * 0.55) = 200.5
+    assert result["cam_h4"].iloc[1] == pytest.approx(200.5)
+
+
+def test_cpr_prior_session_no_same_bar_lookahead():
+    """CPR on row N must reflect session N-1 H/L/C, not row N's own bar."""
+    cpr_plugin = CPRFeature()
+    df = pd.DataFrame({
+        "timestamp": ["2025-07-17", "2025-07-18"],
+        "high": [100.0, 999.0],
+        "low": [90.0, 1.0],
+        "close": [95.0, 500.0],
+    })
+    result = cpr_plugin.calculate(df)
+    # Prior session pivot from (100, 90, 95) — not influenced by 999/1/500
+    assert result["cpr_pivot"].iloc[1] == pytest.approx((100 + 90 + 95) / 3.0)
 
 
 def test_vwap_feature():
@@ -77,10 +88,11 @@ def test_feature_registry_dynamic_discovery():
     registry.register_feature_instance(VWAPFeature())
 
     df = pd.DataFrame({
-        "high": [200.0],
-        "low": [190.0],
-        "close": [195.0],
-        "vwap": [192.0]
+        "timestamp": ["2025-07-17", "2025-07-18"],
+        "high": [200.0, 200.0],
+        "low": [190.0, 190.0],
+        "close": [195.0, 195.0],
+        "vwap": [192.0, 192.0],
     })
 
     out_df = registry.calculate_all(df)
@@ -155,14 +167,26 @@ def test_cpr_zero_range_candle():
     """Verify CPR Feature handles zero range candles (High == Low) without divide-by-zero errors."""
     cpr_plugin = CPRFeature()
     df = pd.DataFrame({
-        "high": [100.0, 100.0],
-        "low": [100.0, 100.0],
-        "close": [100.0, 100.0]
+        "timestamp": ["2025-07-17", "2025-07-18", "2025-07-18"],
+        "high": [100.0, 100.0, 100.0],
+        "low": [100.0, 100.0, 100.0],
+        "close": [100.0, 100.0, 100.0],
     })
     res = cpr_plugin.calculate(df)
     assert res["cpr_width_pct"].iloc[-1] == 0.0
     assert res["cam_h4"].iloc[-1] == 100.0
     assert res["cam_l4"].iloc[-1] == 100.0
+
+
+def test_oi_feature_rejects_constant_open_interest():
+    """Verify IntradayOIFeature rejects fake/constant OI instead of silently scoring neutral."""
+    oi_plugin = IntradayOIFeature()
+    df = pd.DataFrame({
+        "close": [100.0, 105.0, 108.0],
+        "open_interest": [1000, 1000, 1000],
+    })
+    with pytest.raises(DataSourceIntegrityError, match="constant or all-NaN"):
+        oi_plugin.calculate(df)
 
 
 def test_oi_buildup_neutral_quadrant():

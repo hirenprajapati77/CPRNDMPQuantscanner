@@ -138,6 +138,7 @@ def test_write_new_access_token_missing_line_raises(tmp_path):
 
 
 def test_write_new_access_token_preserves_permissions(tmp_path):
+    import sys
     key = Fernet.generate_key()
     fernet = Fernet(key)
     env_path = tmp_path / "fyers.env"
@@ -148,8 +149,9 @@ def test_write_new_access_token_preserves_permissions(tmp_path):
 
     write_new_access_token(str(env_path), fernet, "new-token")
 
-    mode = oct(os.stat(env_path).st_mode)[-3:]
-    assert mode == "600"
+    if sys.platform != "win32":
+        mode = oct(os.stat(env_path).st_mode)[-3:]
+        assert mode == "600"
 
 
 # ---------------------------------------------------------------------------
@@ -185,7 +187,7 @@ def test_health_check_no_snapshots_during_market_hours_alerts(tmp_path):
 
 def test_health_check_stale_snapshot_alerts(tmp_path):
     calendar = NSETradingCalendar(holidays=set())
-    stale_file = tmp_path / "NSE:NIFTY26JULFUT.parquet"
+    stale_file = tmp_path / "BEL26JULFUT.parquet"
     stale_file.write_bytes(b"fake parquet bytes")
     old_time = time_module.time() - 3600  # 1 hour old
     os.utime(stale_file, (old_time, old_time))
@@ -207,7 +209,7 @@ def test_health_check_stale_snapshot_alerts(tmp_path):
 
 def test_health_check_fresh_snapshot_is_healthy(tmp_path):
     calendar = NSETradingCalendar(holidays=set())
-    fresh_file = tmp_path / "NSE:NIFTY26JULFUT.parquet"
+    fresh_file = tmp_path / "BEL26JULFUT.parquet"
     fresh_file.write_bytes(b"fake parquet bytes")
 
     tuesday_market_hours = datetime(2026, 7, 21, 11, 0)

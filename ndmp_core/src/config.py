@@ -21,7 +21,14 @@ class GovernanceConfig(BaseModel):
     min_oos_profit_factor: float = 1.80
     min_deflated_sharpe: float = 1.50
     max_pbo_percent: float = 10.0
-    frictional_cost_percent: float = 0.15
+    max_shap_stability_var: float = 2.50
+    min_marginal_ev_gain: float = 0.35
+    frictional_cost_percent: float = 0.15  # percent units, e.g. 0.15 == 0.15%
+
+    @property
+    def frictional_cost_decimal(self) -> float:
+        """Per-trade friction as a decimal return (0.15% -> 0.0015)."""
+        return self.frictional_cost_percent / 100.0
 
 
 class FyersConfig(BaseModel):
@@ -61,3 +68,7 @@ class SystemConfig(BaseModel):
         with open(yaml_path, "r") as f:
             data = yaml.safe_load(f) or {}
         return cls(**data)
+
+
+# Shared default configuration — single source of truth for gate thresholds and friction.
+DEFAULT_CONFIG = SystemConfig()

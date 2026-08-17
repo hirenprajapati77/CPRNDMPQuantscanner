@@ -19,6 +19,8 @@ class ScannerManifest(BaseModel):
     dataset_version: str
     scan_timestamp: str
     total_symbols_scanned: int
+    symbols_processed: int = 0
+    symbols_skipped: int = 0
     top_candidates_count: int
     runtime_ms: float
     feature_versions: Dict[str, str]
@@ -47,7 +49,9 @@ class DecisionJournalLogger:
         ranked_candidates: List[RankedCandidate],
         runtime_ms: float,
         dataset_version: str = "NSE_FO_V1.0",
-        feature_versions: Dict[str, str] | None = None
+        feature_versions: Dict[str, str] | None = None,
+        symbols_processed: int | None = None,
+        symbols_skipped: int = 0,
     ) -> Tuple[str, str]:
         """
         Log complete scan decision session and manifest to JSON files.
@@ -70,6 +74,8 @@ class DecisionJournalLogger:
             dataset_version=dataset_version,
             scan_timestamp=scan_timestamp,
             total_symbols_scanned=len(ranked_candidates),
+            symbols_processed=symbols_processed if symbols_processed is not None else len(ranked_candidates),
+            symbols_skipped=symbols_skipped,
             top_candidates_count=min(10, len(ranked_candidates)),
             runtime_ms=round(runtime_ms, 2),
             feature_versions=feature_versions

@@ -17,6 +17,17 @@ from ndmp_validation.validation_engine import ValidationEngine
 from ndmp_validation.dashboard import GovernanceDashboard
 
 
+def _with_prior_session(df: pd.DataFrame, high: float, low: float, close: float) -> pd.DataFrame:
+    first_ts = pd.Timestamp(df["timestamp"].iloc[0])
+    prior = df.iloc[[0]].copy()
+    prior["timestamp"] = [first_ts - pd.Timedelta(days=1)]
+    prior["high"] = high
+    prior["low"] = low
+    prior["close"] = close
+    prior["open"] = close
+    return pd.concat([prior, df], ignore_index=True)
+
+
 def test_normal_market_regime():
     """Scenario 1: Normal Market Session (2025-07-18)."""
     scanner = ScannerEngine()
@@ -30,6 +41,7 @@ def test_normal_market_regime():
         "open_interest": [50000, 51000, 52000, 53000, 54000], "vwap": [198.5] * 5,
         "benchmark_close": [24000.0] * 5
     })
+    df_bel = _with_prior_session(df_bel, high=200.0, low=199.5, close=199.0)
     sig = scanner.scan_symbol("BEL", df_bel)
     ranked = ranker.rank_candidates([sig])
     assert ranked[0].symbol == "BEL"
@@ -50,6 +62,7 @@ def test_high_volatility_shock_regime():
         "open_interest": [80000, 85000, 90000, 95000, 100000], "vwap": [135.0] * 5,
         "benchmark_close": [22000.0] * 5
     })
+    df_shock = _with_prior_session(df_shock, high=150.0, low=120.0, close=140.0)
     sig = scanner.scan_symbol("SHOCK_STOCK", df_shock)
     ranked = ranker.rank_candidates([sig])
     # Short Build-up & Below VWAP -> Score < 40.0
@@ -71,6 +84,7 @@ def test_major_event_day_regime():
         "open_interest": [40000, 42000, 44000, 46000, 48000], "vwap": [502.0] * 5,
         "benchmark_close": [24500.0] * 5
     })
+    df_event = _with_prior_session(df_event, high=500.0, low=495.0, close=496.0)
     sig = scanner.scan_symbol("EVENT_WINNER", df_event)
     ranked = ranker.rank_candidates([sig])
     assert ranked[0].score >= 70.0
