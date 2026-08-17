@@ -35,8 +35,7 @@ hc_timer = """[Unit]
 Description=Check Angel One OI poller health every 15 min during market hours
 
 [Timer]
-OnBootSec=10min
-OnUnitActiveSec=15min
+OnCalendar=*-*-* 09..15:00/15 Asia/Kolkata
 AccuracySec=1min
 
 [Install]

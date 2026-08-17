@@ -1,6 +1,19 @@
 """
 NDMP OS v6.0 - NSE Trading Calendar & Market Session Engine
-Handles NSE trading holidays, weekends, trading hours (09:15-15:30 IST), and special sessions.
+Handles NSE trading holidays, weekends, trading hours, and special sessions.
+
+MARKET_CLOSE_TIME governs F&O/derivatives session hours (this project polls
+futures OI, not cash-equity quotes). NSE's Closing Auction Session (CAS),
+live since August 3, 2026 per SEBI circular HO/47/11/11(3)2025-MRD-POD2/I/
+2765/2026, replaced the cash-equity closing-price mechanism for F&O-eligible
+stocks (continuous cash trading now stops at 15:15, official close via
+auction ~15:35) — but explicitly EXTENDED derivatives trading (stock/index
+futures & options) by 10 minutes, to 15:40. Confirmed against two weeks of
+real Angel One poller data (Aug 11-14): OI moves smoothly and continuously
+through the old 15:30 boundary with no freeze/discontinuity, consistent with
+the derivatives segment being unaffected by the cash-side auction mechanism.
+If NSE further changes derivatives session hours, update MARKET_CLOSE_TIME
+here — this is the single source of truth consumed by both OI pollers.
 """
 
 import pandas as pd
@@ -24,7 +37,7 @@ class NSETradingCalendar:
     }
 
     MARKET_OPEN_TIME: time = time(9, 15)
-    MARKET_CLOSE_TIME: time = time(15, 30)
+    MARKET_CLOSE_TIME: time = time(15, 40)
     SCANNER_TIME: time = time(15, 23)
 
     def __init__(self, holidays: Set[date] | None = None):
