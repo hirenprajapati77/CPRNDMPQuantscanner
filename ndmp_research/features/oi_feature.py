@@ -55,9 +55,9 @@ class IntradayOIFeature(BaseFeature):
             )
 
         try:
-            price_change = df["close"].diff().fillna(0.0)
-            oi_change = df["open_interest"].diff().fillna(0.0)
-            oi_change_pct = df["open_interest"].pct_change().fillna(0.0) * 100.0
+            price_change = df["close"].diff()
+            oi_change = df["open_interest"].diff()
+            oi_change_pct = df["open_interest"].pct_change() * 100.0
 
             # Build-Up Matrix Classification (Strict Boundary Logic):
             # 1: Long Build-up (Price > 0, OI > 0)
@@ -65,11 +65,16 @@ class IntradayOIFeature(BaseFeature):
             # 3: Short Build-up (Price < 0, OI > 0)
             # 4: Long Unwinding (Price < 0, OI < 0)
             # 0: Neutral / No Change (Price == 0 or OI == 0)
-            buildup_code = np.zeros(len(df), dtype=int)
+            buildup_code = np.zeros(len(df), dtype=float)
             buildup_code[(price_change > 0) & (oi_change > 0)] = 1   # Long Build-up
             buildup_code[(price_change > 0) & (oi_change < 0)] = 2   # Short Covering
             buildup_code[(price_change < 0) & (oi_change > 0)] = 3   # Short Build-up
             buildup_code[(price_change < 0) & (oi_change < 0)] = 4   # Long Unwinding
+
+            # Propagate NaN to buildup_code and oi_change_pct if there is a gap in inputs or their diffs
+            nan_mask = df["close"].isna() | df["open_interest"].isna() | price_change.isna() | oi_change.isna()
+            buildup_code[nan_mask] = np.nan
+            oi_change_pct[nan_mask] = np.nan
 
             return pd.DataFrame({
                 "oi_change_pct": oi_change_pct,

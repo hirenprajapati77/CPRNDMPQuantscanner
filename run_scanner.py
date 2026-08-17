@@ -12,6 +12,7 @@ from ndmp_core.src.data_quality import DataQualityAuditor
 from ndmp_core.src.scanner_engine import ScannerEngine, StockSignals
 from ndmp_core.src.ranking_engine import RankingEngine
 from ndmp_core.src.decision_journal import DecisionJournalLogger
+from ndmp_core.src.observation_journal import ObservationJournal
 from ndmp_core.src.exceptions import NDMPError
 
 
@@ -64,7 +65,7 @@ def main():
         
         # 2. Ingestion & Quality Audit
         checksum = auditor.compute_sha256(df)
-        score_report = auditor.audit_dataframe(df, dataset_name=symbol, expected_columns=["open", "high", "low", "close", "open_interest", "vwap", "benchmark_close"])
+        score_report = auditor.audit_dataframe(df, dataset_name=symbol, expected_columns=["open", "high", "low", "close", "vwap", "benchmark_close"])
         
         print(f"  Checksum: {checksum}")
         print(f"  Quality Score: {score_report.quality_score:.1f}%")
@@ -105,6 +106,18 @@ def main():
     print(f"  Manifest: {manifest_p}")
     print(f"  Journal: {journal_p}")
     print("=" * 80 + "\n")
+
+    # 6. Observation-mode OI validation logging (does not affect scoring/ranking)
+    obs_journal = ObservationJournal(journal_dir="data/observation_journal")
+    scan_date = ranked_list[0].signals.timestamp.split(" ")[0] if ranked_list else None
+    if scan_date:
+        obs_journal.log_signals(ranked_list, scan_date=scan_date)
+        for rc in ranked_list:
+            fpath = os.path.join("data/parquet", f"{rc.symbol}.parquet")
+            if os.path.exists(fpath):
+                ohlcv_df = pd.read_parquet(fpath)
+                obs_journal.resolve_outcomes(rc.symbol, ohlcv_df)
+        print(f"[OBSERVATION JOURNAL] Logged signals and resolved available outcomes for {len(ranked_list)} candidates.")
 
 
 if __name__ == "__main__":
