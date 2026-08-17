@@ -20,6 +20,7 @@ dependencies = [
     "structlog>=23.0.0",
     "cryptography>=41.0.0",
     "fyers-apiv3>=3.0.0",
+    "smartapi-python>=1.4.0",
 ]
 
 [project.optional-dependencies]

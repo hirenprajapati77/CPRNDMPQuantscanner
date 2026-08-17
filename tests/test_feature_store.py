@@ -190,4 +190,33 @@ def test_benchmark_reproducibility():
     run_benchmark_suite(num_iterations=2, warmups=1)
 
 
+def test_oi_feature_gap_handling():
+    """Verify that gap values in close or open_interest correctly propagate NaN to buildup_code and oi_change_pct."""
+    oi_plugin = IntradayOIFeature()
+    df = pd.DataFrame({
+        "close": [100.0, 105.0, np.nan, 104.0, 106.0],
+        "open_interest": [1000, 1200, 1100, np.nan, 1300]
+    })
+    res = oi_plugin.calculate(df)
+    
+    # Row 0: first row, diff is NaN -> buildup_code and change pct should be NaN
+    assert np.isnan(res["buildup_code"].iloc[0])
+    assert np.isnan(res["oi_change_pct"].iloc[0])
+    
+    # Row 1: valid price up (+5), valid OI up (+200) -> 1.0 (Long buildup)
+    assert res["buildup_code"].iloc[1] == 1.0
+    
+    # Row 2: close is NaN (gap) -> buildup_code and change pct must be NaN
+    assert np.isnan(res["buildup_code"].iloc[2])
+    assert np.isnan(res["oi_change_pct"].iloc[2])
+    
+    # Row 3: open_interest is NaN (gap) -> buildup_code and change pct must be NaN
+    assert np.isnan(res["buildup_code"].iloc[3])
+    assert np.isnan(res["oi_change_pct"].iloc[3])
+    
+    # Row 4: valid price up (+2 vs NaN? No, close diff with previous NaN is NaN) -> buildup_code and change pct must be NaN
+    assert np.isnan(res["buildup_code"].iloc[4])
+    assert np.isnan(res["oi_change_pct"].iloc[4])
+
+
 

@@ -1,6 +1,15 @@
 """
 NDMP OS v6.0 - Fyers Daily Access-Token Refresh
 
+STATUS AS OF APRIL 2026: NON-FUNCTIONAL. Fyers disabled the refresh_token API
+entirely to comply with SEBI's new algo-trading framework (daily 2FA required,
+continuous refresh-token sessions no longer permitted). This code is left in
+place in case that policy changes, but is not currently wired into any
+systemd timer. Daily token rotation is done manually — see the operator
+runbook for the interactive login steps. Do not re-enable
+fyers-token-refresh.timer without first confirming Fyers has restored this
+endpoint.
+
 Fyers access tokens expire every 24h, but the refresh_token issued alongside
 them is valid for 15 days and can mint a fresh access_token without repeating
 the full interactive OAuth login (no TOTP secret needs to be stored). This

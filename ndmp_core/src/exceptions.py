@@ -52,3 +52,21 @@ class FyersTokenRefreshError(FyersAuthError):
 class FyersAPIError(BrokerError):
     """Raised when a Fyers API call fails or returns an unexpected/non-ok response shape."""
     pass
+
+
+class AngelOneAuthError(BrokerError):
+    """Raised when Angel One session/access token env vars are missing, malformed,
+    fail to decrypt, or the daily session has expired."""
+    pass
+
+
+class AngelOneAPIError(BrokerError):
+    """Raised when an Angel One SmartAPI call fails or returns an unexpected/non-ok
+    response shape."""
+    pass
+
+
+class AngelOneInstrumentLookupError(BrokerError):
+    """Raised when a trading symbol cannot be resolved to an Angel One symboltoken
+    via the instrument master (unknown symbol, stale/unfetchable master file)."""
+    pass

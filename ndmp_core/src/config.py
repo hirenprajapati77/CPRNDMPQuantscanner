@@ -35,10 +35,23 @@ class FyersConfig(BaseModel):
     oi_data_dir: str = "data/oi_history"
 
 
+class AngelOneConfig(BaseModel):
+    """Config for NDMP OS's Angel One SmartAPI connection — the OI data source
+    of record for NDMP OS going forward (CPR Pro continues to use Fyers)."""
+    client_code_env: str = "ANGELONE_CLIENT_CODE"
+    token_enc_key_env: str = "ANGELONE_TOKEN_ENC_KEY"
+    access_token_encrypted_env: str = "ANGELONE_ACCESS_TOKEN_ENCRYPTED"
+    api_key_env: str = "ANGELONE_API_KEY"
+    oi_poll_interval_seconds: int = 30
+    oi_data_dir: str = "data/oi_history_angelone"
+    instrument_master_cache_path: str = "data/angelone_instrument_master.json"
+
+
 class SystemConfig(BaseModel):
     engine: EngineConfig = EngineConfig()
     governance: GovernanceConfig = GovernanceConfig()
     fyers: FyersConfig = FyersConfig()
+    angelone: AngelOneConfig = AngelOneConfig()
 
     @classmethod
     def load_from_yaml(cls, yaml_path: str) -> "SystemConfig":

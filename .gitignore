@@ -20,3 +20,20 @@ ndmp_knowledge/experiments/weekly_review_*.md
 # Scratch and Environment files
 scratch/
 *.env
+
+# Temporary scratch/debug helper scripts
+/check_*.py
+/debug_*.py
+/detailed_*.py
+/find_*.py
+/inspect_*.py
+/login_helper.py
+/print_lines.py
+/run_final_poll.py
+/run_smoke_test.py
+/search_master.py
+/test_*.py
+/trend_check.py
+/update_client_code.py
+/verify_counts.py
+/weekly_oi_eyeball.py
